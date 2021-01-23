@@ -26,12 +26,12 @@ public class SMBDefaults {
     public final static double remainingCarbsFraction = 1.0; // fraction of carbs we'll assume will absorb over 4h if we don't yet see carb absorption
 
     // USED IN DETERMINE_BASAL
-    public final static boolean low_temptarget_lowers_sensitivity = false; // lower sensitivity for temptargets <= 99.
-    public final static boolean high_temptarget_raises_sensitivity = false; // raise sensitivity for temptargets >= 111.  synonym for exercise_mode
+    public final static boolean low_temptarget_lowers_sensitivity = true; // lower sensitivity for temptargets <= 99.
+    public final static boolean high_temptarget_raises_sensitivity = true; // raise sensitivity for temptargets >= 111.  synonym for exercise_mode
     public final static boolean sensitivity_raises_target = true; // raise BG target when autosens detects sensitivity
-    public final static boolean resistance_lowers_target = false; // lower BG target when autosens detects resistance
-    public final static boolean adv_target_adjustments = false; // lower target automatically when BG and eventualBG are high
-    public final static boolean exercise_mode = false; // when true, > 105 mg/dL high temp target adjusts sensitivityRatio for exercise_mode. This majorly changes the behavior of high temp targets from before. synonmym for high_temptarget_raises_sensitivity
+    public final static boolean resistance_lowers_target = true; // lower BG target when autosens detects resistance
+    public final static boolean adv_target_adjustments = true; // lower target automatically when BG and eventualBG are high
+    public final static boolean exercise_mode = true; // when true, > 105 mg/dL high temp target adjusts sensitivityRatio for exercise_mode. This majorly changes the behavior of high temp targets from before. synonmym for high_temptarget_raises_sensitivity
     public final static int half_basal_exercise_target = 160; // when temptarget is 160 mg/dL *and* exercise_mode=true, run 50% basal at this level (120 = 75%; 140 = 60%)
     // create maxCOB and default it to 120 because that's the most a typical body can absorb over 4 hours.
     // (If someone enters more carbs or stacks more; OpenAPS will just truncate dosing based on 120.
@@ -56,8 +56,8 @@ public class SMBDefaults {
     //public final static boolean enableSMB_after_carbs = false; // enable supermicrobolus for 6h after carbs, even with 0 COB
     //public final static boolean allowSMB_with_high_temptarget = false; // allow supermicrobolus (if otherwise enabled) even with high temp targets
     public final static int SMBInterval = 3; // minimum interval between SMBs, in minutes. (limited between 1 and 10 min)
-    public final static int maxSMBBasalMinutes = 30; // maximum minutes of basal that can be delivered as a single SMB with uncovered COB
-    public final static int maxUAMSMBBasalMinutes = 30; // maximum minutes of basal that can be delivered as a single SMB when IOB exceeds COB
+    public final static int maxSMBBasalMinutes = 200; // maximum minutes of basal that can be delivered as a single SMB with uncovered COB
+    public final static int maxUAMSMBBasalMinutes = 200; // maximum minutes of basal that can be delivered as a single SMB when IOB exceeds COB
     // curve:"rapid-acting" // Supported curves: "bilinear", "rapid-acting" (Novolog, Novorapid, Humalog, Apidra) and "ultra-rapid" (Fiasp)
     // useCustomPeakTime:false // allows changing insulinPeakTime
     // insulinPeakTime:75 // number of minutes after a bolus activity peaks.  defaults to 55m for Fiasp if useCustomPeakTime: false
