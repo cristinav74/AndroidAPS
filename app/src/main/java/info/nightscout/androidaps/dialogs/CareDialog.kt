@@ -7,7 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import com.google.common.base.Joiner
+import com.ms_square.etsyblur.BlurConfig
+import com.ms_square.etsyblur.SmartAsyncPolicy
 import dagger.android.HasAndroidInjector
 import info.nightscout.androidaps.Constants
 import info.nightscout.androidaps.MainApp
@@ -149,7 +152,7 @@ class CareDialog : DialogFragmentWithDate() {
         }
         binding.duration.setParams(savedInstanceState?.getDouble("duration")
             ?: 0.0, 0.0, Constants.MAX_PROFILE_SWITCH_DURATION, 10.0, DecimalFormat("0"), false, binding.okcancel.ok)
-        if (options == EventType.NOTE || options == EventType.QUESTION || options == EventType.ANNOUNCEMENT)
+        if (options == EventType.NOTE || options == EventType.QUESTION || options == EventType.ANNOUNCEMENT || options == EventType.EXERCISE)
             binding.notesLayout.root.visibility = View.VISIBLE // independent to preferences
     }
 
@@ -223,7 +226,7 @@ class CareDialog : DialogFragmentWithDate() {
                 aapsLogger.debug("USER ENTRY: CAREPORTAL ${careportalEvent.eventType} json: ${careportalEvent.json}")
                 MainApp.getDbHelper().createOrUpdate(careportalEvent)
                 nsUpload.uploadCareportalEntryToNS(json)
-            }, null)
+            }, null, sp)
         }
         return true
     }

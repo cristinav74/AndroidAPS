@@ -32,6 +32,11 @@ public class GlucoseStatus {
     public double short_avgdelta = 0d;
     public double long_avgdelta = 0d;
     public long date = 0L;
+    // GZ mod 7: append 2 variables for 5% range
+    public double dura05 = 0d;
+    public double avg05 = 0d;
+
+
 
 
     public String log() {
@@ -54,6 +59,9 @@ public class GlucoseStatus {
         this.avgdelta = Round.roundTo(this.avgdelta, 0.01);
         this.short_avgdelta = Round.roundTo(this.short_avgdelta, 0.01);
         this.long_avgdelta = Round.roundTo(this.long_avgdelta, 0.01);
+        // GZ mod 7: append 2 variables for 5% range
+        this.dura05 = Round.roundTo(this.dura05, 0.1);
+        this.avg05 = Round.roundTo(this.avg05, 0.1);
         return this;
     }
 
@@ -102,6 +110,10 @@ public class GlucoseStatus {
                 status.long_avgdelta = 0d;
                 status.avgdelta = 0d; // for OpenAPS MA
                 status.date = now_date;
+                // GZ mod 7: append 2 variables for 5% range
+                status.dura05 = 0d;
+                status.avg05 = now.value;
+
                 aapsLogger.debug(LTag.GLUCOSE, "sizeRecords==1");
                 return status.round();
             }
@@ -166,6 +178,28 @@ public class GlucoseStatus {
 
             status.long_avgdelta = average(long_deltas);
             status.avgdelta = status.short_avgdelta; // for OpenAPS MA
+            // GZ mod 7: calculate 2 variables for 5% range
+            //  initially just test the handling of arguments
+            // status.dura05 = 11d;
+            // status.avg05 = 47.11d;
+            //  GZ mod 7a: now do the real maths
+            double bw = 0.05d;             // used for Eversense; may be lower for Dexcom
+            double sumBG = now.value;
+            double oldavg = now.value;
+            long minutesdur = Math.round((0L) / (1000d * 60));
+            for (int i = 1; i < sizeRecords; i++) {
+                BgReading then = data.get(i);
+                long then_date = then.date;
+                if (then.value > oldavg*(1-bw) && then.value < oldavg*(1+bw)) {
+                    sumBG += then.value;
+                    oldavg = sumBG / (i+1);
+                    minutesdur = Math.round((now_date - then_date) / (1000d * 60));
+                } else {
+                    break;
+                }
+            }
+            status.avg05 = oldavg;
+            status.dura05 = minutesdur;
 
             aapsLogger.debug(LTag.GLUCOSE, status.log());
             return status.round();

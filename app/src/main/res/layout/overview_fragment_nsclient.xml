@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".plugins.general.overview.OverviewFragment">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/overview_toppart_scrollbar"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="130dp"
+        android:layout_above="@+id/overview_buttons"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,58 +33,48 @@
 
             <include layout="@layout/overview_info_layout" />
 
-            <include layout="@layout/overview_statuslights_layout" />
 
             <com.google.android.flexbox.FlexboxLayout xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorControlHighlight"
-                app:alignContent="stretch"
-                app:alignItems="stretch"
-                app:flexDirection="row"
-                app:flexWrap="wrap"
-                app:justifyContent="center">
+                android:paddingStart="4sp"
+                android:paddingEnd="4sp"
+                android:text="Pump: running"
+                android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/overview_pump"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingStart="4sp"
-                    android:paddingEnd="4sp"
-                    android:text="Pump: running"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp" />
+            <TextView
+                android:id="@+id/overview_pump"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="4sp"
+                android:paddingEnd="4sp"
+                android:text="Pump: running"
+                android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/overview_openaps"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:paddingStart="4sp"
-                    android:paddingEnd="4sp"
-                    android:text="OAPS: 3 min ago"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp" />
+            <TextView
+                android:id="@+id/overview_openaps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="4sp"
+                android:paddingEnd="4sp"
+                android:text="OAPS: 3 min ago"
+                android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/overview_uploader"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:paddingStart="4sp"
-                    android:paddingEnd="4sp"
-                    android:text="UPLD: 84%"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp" />
-
-            </com.google.android.flexbox.FlexboxLayout>
+            <TextView
+                android:id="@+id/overview_uploader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="4sp"
+                android:paddingEnd="4sp"
+                android:text="UPLD: 84%"
+                android:textSize="16sp" />
 
             <include layout="@layout/overview_graphs_layout" />
 
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <include layout="@layout/overview_buttons_layout" />
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

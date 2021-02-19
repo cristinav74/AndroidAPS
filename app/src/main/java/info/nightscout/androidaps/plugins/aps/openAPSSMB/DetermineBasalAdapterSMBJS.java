@@ -27,6 +27,7 @@ import info.nightscout.androidaps.data.MealData;
 import info.nightscout.androidaps.data.Profile;
 import info.nightscout.androidaps.db.TemporaryBasal;
 import info.nightscout.androidaps.interfaces.ActivePluginProvider;
+import info.nightscout.androidaps.interfaces.InsulinInterface;
 import info.nightscout.androidaps.interfaces.ProfileFunction;
 import info.nightscout.androidaps.interfaces.PumpInterface;
 import info.nightscout.androidaps.logging.AAPSLogger;
@@ -66,14 +67,16 @@ public class DetermineBasalAdapterSMBJS {
     private boolean mSMBAlwaysAllowed;
     private long mCurrentTime;
     private boolean mIsSaveCgmSource;
-
     private String storedCurrentTemp = null;
     private String storedIobData = null;
 
     private String storedGlucoseStatus = null;
     private String storedProfile = null;
     private String storedMeal_data = null;
-
+    private String storedAutosens_data = null;
+    private String storedMicroBolusAllowed = null;
+    private String storedSMBAlwaysAllowed = null;
+    private String storedCurrentTime = null;
     private String scriptDebug = "";
 
     /**
@@ -209,6 +212,13 @@ public class DetermineBasalAdapterSMBJS {
     String getMealDataParam() {
         return storedMeal_data;
     }
+    String getAutosensDataParam() {
+        return storedAutosens_data;
+    }
+    String getMicroBolusAllowedParam() {
+        return storedMicroBolusAllowed;
+    }
+
 
     String getScriptDebug() {
         return scriptDebug;
@@ -234,8 +244,11 @@ public class DetermineBasalAdapterSMBJS {
 
         PumpInterface pump = activePluginProvider.getActivePump();
         Double pumpbolusstep = pump.getPumpDescription().bolusStep;
-        mProfile = new JSONObject();
 
+        InsulinInterface insulinInterface = activePluginProvider.getActiveInsulin();
+        int insulinPT = insulinInterface.getPeak();
+
+        mProfile = new JSONObject();
         mProfile.put("max_iob", maxIob);
         //mProfile.put("dia", profile.getDia());
         mProfile.put("type", "current");
@@ -250,9 +263,11 @@ public class DetermineBasalAdapterSMBJS {
         mProfile.put("current_basal_safety_multiplier", sp.getDouble(R.string.key_openapsama_current_basal_safety_multiplier, 4d));
 
         //mProfile.put("high_temptarget_raises_sensitivity", SP.getBoolean(R.string.key_high_temptarget_raises_sensitivity, SMBDefaults.high_temptarget_raises_sensitivity));
-        mProfile.put("high_temptarget_raises_sensitivity", false);
+        mProfile.put("high_temptarget_raises_sensitivity",sp.getBoolean(resourceHelper.gs(R.string.key_high_temptarget_raises_sensitivity),SMBDefaults.high_temptarget_raises_sensitivity));
+        //mProfile.put("high_temptarget_raises_sensitivity", false);
+        mProfile.put("low_temptarget_lowers_sensitivity",sp.getBoolean(resourceHelper.gs(R.string.key_low_temptarget_lowers_sensitivity),SMBDefaults.low_temptarget_lowers_sensitivity));
         //mProfile.put("low_temptarget_lowers_sensitivity", SP.getBoolean(R.string.key_low_temptarget_lowers_sensitivity, SMBDefaults.low_temptarget_lowers_sensitivity));
-        mProfile.put("low_temptarget_lowers_sensitivity", false);
+        //mProfile.put("low_temptarget_lowers_sensitivity", false);
 
 
         mProfile.put("sensitivity_raises_target", sp.getBoolean(R.string.key_sensitivity_raises_target, SMBDefaults.sensitivity_raises_target));
@@ -284,10 +299,12 @@ public class DetermineBasalAdapterSMBJS {
         //set the min SMB amount to be the amount set by the pump.
         mProfile.put("bolus_increment", pumpbolusstep);
         mProfile.put("carbsReqThreshold", sp.getInt(R.string.key_carbsReqThreshold, SMBDefaults.carbsReqThreshold));
-
+        mProfile.put("insulinPeakTime", insulinPT);
         mProfile.put("current_basal", basalrate);
         mProfile.put("temptargetSet", tempTargetSet);
         mProfile.put("autosens_max", SafeParse.stringToDouble(sp.getString(R.string.key_openapsama_autosens_max, "1.2")));
+        // gz mod7c: can I add autosens_min here?
+        mProfile.put("autosens_min", SafeParse.stringToDouble(sp.getString(R.string.key_openapsama_autosens_min, "0.8")));
 
         if (profileFunction.getUnits().equals(Constants.MMOL)) {
             mProfile.put("out_units", "mmol/L");
@@ -322,7 +339,9 @@ public class DetermineBasalAdapterSMBJS {
         mGlucoseStatus.put("short_avgdelta", glucoseStatus.short_avgdelta);
         mGlucoseStatus.put("long_avgdelta", glucoseStatus.long_avgdelta);
         mGlucoseStatus.put("date", glucoseStatus.date);
-
+        // GZ mod 7: append 2 variables for 5% range
+        mGlucoseStatus.put("dura05", glucoseStatus.dura05);
+        mGlucoseStatus.put("avg05", glucoseStatus.avg05);
         mMealData = new JSONObject();
         mMealData.put("carbs", mealData.carbs);
         mMealData.put("boluses", mealData.boluses);
