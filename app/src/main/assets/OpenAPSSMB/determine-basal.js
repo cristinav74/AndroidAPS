@@ -610,11 +610,11 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             //MD MT The first spike usually peaks after an hour
             if (profile.temptarget_minutesrunning <= 30 && glucose_status.delta > 0 && iob_data.iob<= 7) predBGslength = 6; //MD Shorten the prediction to 6 * 5 = 30m very powerfull
             //MD MT Shorten the prediction to 6 * 5 = 30m when delta is positive and greater than 15 min average in the short term - insulinPeakTime :)
-            if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0 && glucose_status.delta > glucose_status.short_avgdelta && iob_data.iob<=9) predBGslength = 6;
+            if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0 && glucose_status.delta >= glucose_status.long_avgdelta && iob_data.iob<=9) predBGslength = 6;
             //MD MT The second spike usually comes at 1h30 or 3h
             //if (profile.temptarget_minutesrunning >= 120 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0) predBGslength = 12; //MD Shorten the prediction to 10 * 5 = 50m when rising
             //MD Shorten the prediction to 12 * 5 = 60m when delta is positive and greater than 15 min average in the long term
-            if (profile.temptarget_minutesrunning >= 90 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0 && glucose_status.delta > glucose_status.short_avgdelta) predBGslength = 12; //MD Shorten the prediction to 12 * 5 = 60m when rising
+            if (profile.temptarget_minutesrunning >= 90 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0 && glucose_status.delta >= glucose_status.long_avgdelta) predBGslength = 12; //MD Shorten the prediction to 12 * 5 = 60m when rising
         }
 
     try {
