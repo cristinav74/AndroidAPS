@@ -598,16 +598,23 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var remainingCIs = [];
     var predCIs = [];
     var ignoreCOB = true; //MD#01: Ignore any COB and rely purely on UAM
-    var predBGslengthDefault = 18; //MD Normal prediction length of 21 * 5 = 1h 45m
+    var predBGslengthDefault = 21; //MD Normal prediction length of 21 * 5 = 1h 45m
     var predBGslength = predBGslengthDefault; //MD Normal prediction length of 21 * 5 = 1h 45m
 
-    //MD If we have a Low TT of <= 5.0 (90) for 90 minutes or more then we are eating soon
-        if (profile.temptargetSet && target_bg <= 90 && bg > threshold && profile.temptarget_duration >= 90) {
-            predBGslength = 12; // bit shorter for when eating soon is on
-            //MD The first spike usually peaks after an hour
-            if (profile.temptarget_minutesrunning <= 60 && glucose_status.delta > 0) predBGslength = 6; //MD Shorten the prediction to 8 * 5 = 40m when rising in the short term
-            //MD The second spike usually comes at 2h or 3h
-            if (profile.temptarget_minutesrunning >= 120 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0) predBGslength = 10; //MD Shorten the prediction to 10 * 5 = 50m when rising
+    //MT if we have resistance to avoid long time out of range, this one is a test to manage out of post meal time
+        if (! profile.temptargetSet && bg > 150 && iob_data.iob<5)predBGslength=12;
+
+    //MD MT If we have a Low TT of <= 5.0 (90) for 90 minutes or more then we are eating soon
+        if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
+            predBGslength = 18; // bit shorter for when eating soon is on
+            //MD MT The first spike usually peaks after an hour
+            if (profile.temptarget_minutesrunning <= 30 && glucose_status.delta > 0 && iob_data.iob<= 7) predBGslength = 6; //MD Shorten the prediction to 6 * 5 = 30m very powerfull
+            //MD MT Shorten the prediction to 6 * 5 = 30m when delta is positive and greater than 15 min average in the short term - insulinPeakTime :)
+            if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0 && glucose_status.delta > glucose_status.short_avgdelta && iob_data.iob<=9) predBGslength = 6;
+            //MD MT The second spike usually comes at 1h30 or 3h
+            //if (profile.temptarget_minutesrunning >= 120 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0) predBGslength = 12; //MD Shorten the prediction to 10 * 5 = 50m when rising
+            //MD Shorten the prediction to 12 * 5 = 60m when delta is positive and greater than 15 min average in the long term
+            if (profile.temptarget_minutesrunning >= 90 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0 && glucose_status.delta > glucose_status.short_avgdelta) predBGslength = 12; //MD Shorten the prediction to 12 * 5 = 60m when rising
         }
 
     try {
@@ -1131,7 +1138,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
 
             //MD bolus the insulinReqPct, up to maxBolus, rounding down to nearest bolus increment
             var roundSMBTo = 1 / profile.bolus_increment;
-            var maxBolusPct = 0.8;
+            var maxBolusPct = 0.75;
 //            var microBolus = Math.floor(Math.min(insulinReq * maxBolusPct ,maxBolus)*roundSMBTo)/roundSMBTo; //MD Allow 80% insulinReq by default
 
             //  MD: If we have shortened the prediction we have set a TT of 5.0 (90) or below, allow larger maxBolus up to maxBolusPct of insulinReq
@@ -1143,7 +1150,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             // calculate a long enough zero temp to eventually correct back up to target
             var smbTarget = target_bg;
             worstCaseInsulinReq = (smbTarget - (naive_eventualBG + minIOBPredBG)/2 ) / sens;
-            durationReq = round(30*worstCaseInsulinReq / profile.current_basal);
+            durationReq = round(60*worstCaseInsulinReq / profile.current_basal);
 
             //MD: Only use minBolus if we dont have a TT, high temp has SMB disabled in prefs
             if (! profile.temptargetSet) {
