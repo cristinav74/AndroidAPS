@@ -124,7 +124,7 @@ function autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_d
     var avg05  = glucose_status.autoISF_average;            // mod 7d
     //r weightISF = (1 - profile.autosens_min)*2;           // mod 7b: use 0.6 to get factor 0.8; use 1 to get factor 0, i.e. OFF
     var weightISF = profile.autoisf_hourlychange;           // mod 7d: specify factor directly; use factor 0 to shut autoISF OFF
-    if (meal_data.mealCOB==0 && dura05>=10) {
+    if (meal_data.mealCOB==0 && dura05>=5) {
         if (avg05 > target_bg) {
             // # fight the resistance at high levels
             var maxISFReduction = profile.autoisf_max;      // mod 7d
@@ -600,22 +600,40 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var ignoreCOB = true; //MD#01: Ignore any COB and rely purely on UAM
     var predBGslengthDefault = 21; //MD Normal prediction length of 21 * 5 = 1h 45m
     var predBGslength = predBGslengthDefault; //MD Normal prediction length of 21 * 5 = 1h 45m
+    var predBGslengthStaticMins = 0; // just to set the variable
+
+     //MD MT If we have a Low TT of <= 5.0 (90) for 60 minutes or more then we are eating soon
+    if (profile.temptargetSet && target_bg <= 90 && bg > threshold && profile.temptarget_duration >= 60) {
+            predBGslengthDefault = 15; // prediction bit shorter for when eating soon is on
+            predBGslength = predBGslengthDefault;
+            predBGslengthStaticMins = round(profile.temptarget_duration/5,0); // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
+
+            // MD MT Shorten the prediction to 6 * 5 = 30m when rising in the short term
+            // The rise typically starts after 15 minutes so allow this extra time
+            // We start at 6 and go longer over time every 5 minutes ie 6 - 12
+            if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0) {
+                //predBGslengthStaticMins = 45; // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
+                predBGslength = Math.max(round(predBGslengthStaticMins-(predBGslengthStaticMins-(profile.temptarget_minutesrunning/5)),0),6); //increase by 1 every 5 starting value is 6 in this case
+                predBGslength = Math.min(predBGslength,predBGslengthDefault); // The most this prediction length can get is 15 in this case
+           }
+    }
 
     //MT if we have resistance to avoid long time out of range, this one is a test to manage out of post meal time
-        if (! profile.temptargetSet && bg > 150 && iob_data.iob<5)predBGslength=12;
-
-    //MD MT If we have a Low TT of <= 5.0 (90) for 90 minutes or more then we are eating soon
-        if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
-            predBGslength = 18; // bit shorter for when eating soon is on
-            //MD MT The first spike usually peaks after an hour
-            if (profile.temptarget_minutesrunning <= 30 && glucose_status.delta > 0 && iob_data.iob<= 7) predBGslength = 6; //MD Shorten the prediction to 6 * 5 = 30m very powerfull
-            //MD MT Shorten the prediction to 6 * 5 = 30m when delta is positive and greater than 15 min average in the short term - insulinPeakTime :)
-            if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0 && glucose_status.delta >= glucose_status.long_avgdelta && iob_data.iob<=9) predBGslength = 6;
-            //MD MT The second spike usually comes at 1h30 or 3h
-            //if (profile.temptarget_minutesrunning >= 120 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0) predBGslength = 12; //MD Shorten the prediction to 10 * 5 = 50m when rising
-            //MD Shorten the prediction to 12 * 5 = 60m when delta is positive and greater than 15 min average in the long term
-            if (profile.temptarget_minutesrunning >= 90 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0 && glucose_status.delta >= glucose_status.long_avgdelta) predBGslength = 12; //MD Shorten the prediction to 12 * 5 = 60m when rising
-        }
+            if (! profile.temptargetSet && bg > 150 && iob_data.iob<6){
+                predBGslength=12;
+            }
+//    //MD MT If we have a Low TT of <= 5.0 (90) for 90 minutes or more then we are eating soon
+//            if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
+//                predBGslength = 18; // bit shorter for when eating soon is on
+//                //MD MT The first spike usually peaks after an hour
+//                if (profile.temptarget_minutesrunning <= 30 && glucose_status.delta > 0 && iob_data.iob<= 7) predBGslength = 6; //MD Shorten the prediction to 6 * 5 = 30m very powerfull
+//                //MD MT Shorten the prediction to 6 * 5 = 30m when delta is positive and greater than 15 min average in the short term - insulinPeakTime :)
+//                if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0 && glucose_status.delta > glucose_status.long_avgdelta && iob_data.iob<=10) predBGslength = 6;
+//                //MD MT The second spike usually comes at 1h30 or 3h
+//                //if (profile.temptarget_minutesrunning >= 120 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0) predBGslength = 12; //MD MT Shorten the prediction to 10 * 5 = 50m when rising
+//                //MD MT Shorten the prediction to 12 * 5 = 60m when delta is positive and greater than 15 min average in the long term
+//                if (profile.temptarget_minutesrunning >= 90 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0 && glucose_status.delta >= glucose_status.long_avgdelta) predBGslength = 12; //MD MT Shorten the prediction to 12 * 5 = 60m when rising
+//            }
 
     try {
         iobArray.forEach(function(iobTick) {
@@ -674,7 +692,9 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             // look ahead 60m (regardless of insulin type) so as to be less aggressive on slower insulins
             var insulinPeakTime = 45;
             // add 30m to allow for insulin delivery (SMBs or temps)
-            insulinPeakTime = 60;
+            //insulinPeakTime = 60;
+            // look ahead to insulinPeakTime
+            var insulinPeakTime = profile.insulinPeakTime + 5;
             var insulinPeak5m = (insulinPeakTime/60)*12;
             //console.error(insulinPeakTime, insulinPeak5m, profile.insulinPeakTime, profile.curve);
 
@@ -1136,17 +1156,22 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                 maxBolus = round( profile.current_basal * profile.maxSMBBasalMinutes / 60 ,1);
             }
 
-            //MD bolus the insulinReqPct, up to maxBolus, rounding down to nearest bolus increment
-            var roundSMBTo = 1 / profile.bolus_increment;
-            var maxBolusPct = 0.75;
-//            var microBolus = Math.floor(Math.min(insulinReq * maxBolusPct ,maxBolus)*roundSMBTo)/roundSMBTo; //MD Allow 80% insulinReq by default
+           //MD MT bolus the insulinReq, up to maxBolus %, rounding down to nearest bolus increment
+                        var roundSMBTo = 1 / profile.bolus_increment;
+                        //var microBolus = Math.floor(Math.min(insulinReq/2,maxBolus)*roundSMBTo)/roundSMBTo;
+                       var insulinReqPct = 0.75;
+                       var maxBolusTT=maxBolus;
+                       //var microBolus = Math.floor(Math.min(insulinReq * insulinReqPct ,maxBolus)*roundSMBTo)/roundSMBTo; //MD Allow 80% insulinReq by default
 
-            //  MD: If we have shortened the prediction we have set a TT of 5.0 (90) or below, allow larger maxBolus up to maxBolusPct of insulinReq
-            if (predBGslength < predBGslengthDefault) maxBolusPct = 1.0; //MD maxBolus is allowed to go to 100% of the insulinReq IT MAY BE THAT WE DONT EVEN NEED THIS WITH THE PREDICTION LENGTH SHORTENED
-
-            var maxBolusTT = Math.max(maxBolus, insulinReq * maxBolusPct); //MD maxBolus is existing maxBolus or maxBolusPct % of the insulinReq, whichever is the greater
-            var microBolus = Math.floor(Math.min(insulinReq,maxBolusTT)*roundSMBTo)/roundSMBTo; // MD allow up to maxBolus of 100% of insulinReq
-
+                       // If we have shortened the prediction we have set a TT of 5.0 (90) or below, allow larger maxBolus up to insulinReqPct of insulinReq
+                       // The max-iob and maxbolus settings should be reviewed within the safety section of AAPS
+                       // https://androidaps.readthedocs.io/en/latest/Usage/Open-APS-features.html#super-micro-bolus-smb
+                        // maxBolus is allowed to go to this % of the insulinReq if bg is predicted to be higher
+                       if (predBGslength <= predBGslengthDefault && eventualBG > bg) {
+                           insulinReqPct = 1.0;
+                           var maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct); //MD maxBolus is existing maxBolus or insulinReqPct % of the insulinReq, whichever is the greater
+                       }
+                       var microBolus = Math.floor(Math.min(insulinReq*insulinReqPct,maxBolusTT)*roundSMBTo)/roundSMBTo; // MD allow up to maxBolus of insulinReq
             // calculate a long enough zero temp to eventually correct back up to target
             var smbTarget = target_bg;
             worstCaseInsulinReq = (smbTarget - (naive_eventualBG + minIOBPredBG)/2 ) / sens;
