@@ -603,7 +603,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var predBGslengthStaticMins = 0; // just to set the variable
 
      //MD MT If we have a Low TT of <= 5.0 (90) for 60 minutes or more then we are eating soon
-    if (profile.temptargetSet && target_bg <= 90 && bg > threshold && profile.temptarget_duration >= 60) {
+    if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
             predBGslengthDefault = 15; // prediction bit shorter for when eating soon is on
             predBGslength = predBGslengthDefault;
             predBGslengthStaticMins = round(profile.temptarget_duration/5,0); // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
@@ -1167,7 +1167,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                        // The max-iob and maxbolus settings should be reviewed within the safety section of AAPS
                        // https://androidaps.readthedocs.io/en/latest/Usage/Open-APS-features.html#super-micro-bolus-smb
                         // maxBolus is allowed to go to this % of the insulinReq if bg is predicted to be higher
-                       if (predBGslength <= predBGslengthDefault && eventualBG > bg) {
+                       if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
                            insulinReqPct = 1.0;
                            var maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct); //MD maxBolus is existing maxBolus or insulinReqPct % of the insulinReq, whichever is the greater
                        }
@@ -1218,7 +1218,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                 rT.reason +=  "; maxBolus " + maxBolus + ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
             }
             if (durationReq > 0) {
-                rT.reason += "; setting " + durationReq + "m low temp of " + smbLowTempReq + "U/h";
+                rT.reason += "; setting " + durationReq + "m low temp of " + smbLowTempReq + "U/h"+ ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
             }
             rT.reason += ". ";
 
