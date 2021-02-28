@@ -122,8 +122,8 @@ function autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_d
     // #### mod 7d: use standalone variables for autopISF
     var dura05 = glucose_status.autoISF_duration;           // mod 7d
     var avg05  = glucose_status.autoISF_average;            // mod 7d
-    var weightISF = (1 - profile.autosens_min)*2;           // mod 7b: use 0.6 to get factor 0.8; use 1 to get factor 0, i.e. OFF
-    //var weightISF = profile.autoisf_hourlychange;           // mod 7d: specify factor directly; use factor 0 to shut autoISF OFF
+    //r weightISF = (1 - profile.autosens_min)*2;           // mod 7b: use 0.6 to get factor 0.8; use 1 to get factor 0, i.e. OFF
+    var weightISF = profile.autoisf_hourlychange;           // mod 7d: specify factor directly; use factor 0 to shut autoISF OFF
     if (meal_data.mealCOB==0 && dura05>=5) {
         if (avg05 > target_bg) {
             // # fight the resistance at high levels
@@ -266,7 +266,6 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         }
     }
 
-
     // adjust min, max, and target BG for sensitivity, such that 50% increase in ISF raises target from 100 to 120
     if (profile.temptargetSet) {
         //console.log("Temp Target set, not adjusting with autosens; ");
@@ -328,8 +327,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         //console.log(" (autosens ratio "+sensitivityRatio+")");
     }
     console.error("; CR:",profile.carb_ratio);
-
-    if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && profile.temptarget_minutesrunning <= 30 && iob_data.iob < 5) {
+  if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && profile.temptarget_minutesrunning <= 30 && iob_data.iob < 5) {
     sens = profile.sens / 3;
     sens = round(sens,1)
     sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //test TEMPautoISF
@@ -611,7 +609,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var predBGslengthStaticMins = 0; // just to set the variable
     var waves = false;
      //MD MT If we have a Low TT of <= 5.0 (90) for 60 minutes or more then we are eating soon
-    if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60) {
+    if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
             predBGslengthDefault = 18; // prediction bit shorter for when eating soon is on
             predBGslength = predBGslengthDefault;
             predBGslengthStaticMins = round(profile.temptarget_duration/5,0); // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
@@ -1166,11 +1164,10 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                 maxBolus = round( profile.current_basal * profile.maxSMBBasalMinutes / 60 ,1);
             }
 
-
            //MD MT bolus the insulinReq, up to maxBolus %, rounding down to nearest bolus increment
                         var roundSMBTo = 1 / profile.bolus_increment;
                         //var microBolus = Math.floor(Math.min(insulinReq/2,maxBolus)*roundSMBTo)/roundSMBTo;
-                       var insulinReqPct = 0.65;
+                       var insulinReqPct = 0.75;
                        var maxBolusTT=maxBolus;
                        //var microBolus = Math.floor(Math.min(insulinReq * insulinReqPct ,maxBolus)*roundSMBTo)/roundSMBTo; //MD Allow 80% insulinReq by default
 
@@ -1180,19 +1177,19 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                         // maxBolus is allowed to go to this % of the insulinReq if bg is predicted to be higher
                        if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && predBGslength <=6 && iob_data.iob < 5) {
                             insulinReqPct = 1.3;
-                            //maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct); //MD maxBolus is existing maxBolus or insulinReqPct % of the insulinReq, whichever is the greater
-                       }else if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && predBGslength <=15 && UAMpredBG > 150 && iob_data.iob < 8) {
+                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct); //MD maxBolus is existing maxBolus or insulinReqPct % of the insulinReq, whichever is the greater
+                       }else if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && predBGslength <=15 && UAMpredBG > 130 && iob_data.iob < 8) {
                             insulinReqPct = 1;
-                            //maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
+                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
                        }else if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && UAMpredBG > 150) {
                             insulinReqPct = 0.85;
-                            //maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
+                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
 
                        }else if ( waves === true )   {
                             insulinReqPct = 0.85;
-
+                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
                        }
-                       maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
+
                        var microBolus = Math.floor(Math.min(insulinReq*insulinReqPct,maxBolusTT)*roundSMBTo)/roundSMBTo; // MD allow up to maxBolus of insulinReq
             // calculate a long enough zero temp to eventually correct back up to target
             var smbTarget = target_bg;
@@ -1237,7 +1234,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             }
             rT.reason += " insulinReq " + insulinReq;
             if (microBolus > maxBolus) {
-                rT.reason +=  "; maxBolus " + maxBolus + ", maxBolusTT " + Math.round(insulinReqPct*100) + "%" ;
+                rT.reason +=  "; maxBolus " + maxBolus + ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
             }
             if (durationReq > 0) {
                 rT.reason += "; setting " + durationReq + "m low temp of " + smbLowTempReq + "U/h"+ ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
