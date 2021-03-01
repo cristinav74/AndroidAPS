@@ -327,12 +327,18 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         //console.log(" (autosens ratio "+sensitivityRatio+")");
     }
     console.error("; CR:",profile.carb_ratio);
-  if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && profile.temptarget_minutesrunning <= 30 && iob_data.iob < 5) {
-    sens = profile.sens / 3;
-    sens = round(sens,1)
+  if (profile.temptargetSet && target_bg>=80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5) { //MT: change isf for a normal meal who will rise slowly
+    sens = profile.sens / 3; //MT will change isf value : if ISF = 72, in this condition it will become 24
+    sens = round(sens,1);
     sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //test TEMPautoISF
-    } else {
-    sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //autoISF
+    } else if (profile.temptargetSet && target_bg >= 80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob > 5) {
+    sens = profile.sens * 1.6; //MT will change ISF value : if ISF = 72, in this condition it will become 115. The objective is to give more time to the first 5U to be active and not overdosing
+    sens = round(sens,1);
+    }else if (profile.temptargetSet && target_bg <= 79 && profile.temptarget_duration >= 60 && iob_data.iob < 8) { //MT : change ISF for a large meal with sugar, will send big quantity faster and will  stop arround 10 in the first rise bigger than 10, in two smb
+    sens = profile.sens / 3;
+    sens = round (sens,1);
+    }else{
+    sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //autoISF //MT : come back to the normal value from autoISF with temptarget
     }
     // compare currenttemp to iob_data.lastTemp and cancel temp if they don't match
     var lastTempAge;
@@ -1167,7 +1173,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
            //MD MT bolus the insulinReq, up to maxBolus %, rounding down to nearest bolus increment
                         var roundSMBTo = 1 / profile.bolus_increment;
                         //var microBolus = Math.floor(Math.min(insulinReq/2,maxBolus)*roundSMBTo)/roundSMBTo;
-                       var insulinReqPct = 0.75;
+                       var insulinReqPct = 0.65;
                        var maxBolusTT=maxBolus;
                        //var microBolus = Math.floor(Math.min(insulinReq * insulinReqPct ,maxBolus)*roundSMBTo)/roundSMBTo; //MD Allow 80% insulinReq by default
 
