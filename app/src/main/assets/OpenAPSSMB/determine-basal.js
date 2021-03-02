@@ -327,19 +327,21 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         //console.log(" (autosens ratio "+sensitivityRatio+")");
     }
     console.error("; CR:",profile.carb_ratio);
-  if (profile.temptargetSet && target_bg>=80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5) { //MT: change isf for a normal meal who will rise slowly
+  if (profile.temptargetSet && target_bg>=80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5 ) { //MT: change isf for a normal meal who will rise slowly
     sens = profile.sens / 3; //MT will change isf value : if ISF = 72, in this condition it will become 24
     sens = round(sens,1);
-    sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //test TEMPautoISF
+
     } else if (profile.temptargetSet && target_bg >= 80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob > 5) {
     sens = profile.sens * 1.6; //MT will change ISF value : if ISF = 72, in this condition it will become 115. The objective is to give more time to the first 5U to be active and not overdosing
     sens = round(sens,1);
+
     }else if (profile.temptargetSet && target_bg <= 79 && profile.temptarget_duration >= 60 && iob_data.iob < 8) { //MT : change ISF for a large meal with sugar, will send big quantity faster and will  stop arround 10 in the first rise bigger than 10, in two smb
     sens = profile.sens / 3;
     sens = round (sens,1);
-    }else{
-    sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //autoISF //MT : come back to the normal value from autoISF with temptarget
+
     }
+    sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //autoISF //MT : come back to the normal value from autoISF with temptarget
+
     // compare currenttemp to iob_data.lastTemp and cancel temp if they don't match
     var lastTempAge;
     if (typeof iob_data.lastTemp !== 'undefined' ) {
@@ -615,7 +617,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var predBGslengthStaticMins = 0; // just to set the variable
     var waves = false;
      //MD MT If we have a Low TT of <= 5.0 (90) for 60 minutes or more then we are eating soon
-    if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
+    if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60) { //&& bg > threshold
             predBGslengthDefault = 18; // prediction bit shorter for when eating soon is on
             predBGslength = predBGslengthDefault;
             predBGslengthStaticMins = round(profile.temptarget_duration/5,0); // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
