@@ -111,9 +111,8 @@ function enable_smb(
 }
 
 // auto ISF === START
-function autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio)
-{   // #### mod 7e: added switch fr autoISF ON/OFF
-    if ( !profile.use_autoisf ) {
+function autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio) {   // #### mod 7e: added switch fr autoISF ON/OFF
+    if (!profile.use_autoisf) {
         console.error("autoISF disabled in Preferences");
         return sens;
     }
@@ -121,34 +120,33 @@ function autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_d
     // #### mod 7b: misuse autosens_min to get the scale factor
     // #### mod 7d: use standalone variables for autopISF
     var dura05 = glucose_status.autoISF_duration;           // mod 7d
-    var avg05  = glucose_status.autoISF_average;            // mod 7d
+    var avg05 = glucose_status.autoISF_average;            // mod 7d
     //r weightISF = (1 - profile.autosens_min)*2;           // mod 7b: use 0.6 to get factor 0.8; use 1 to get factor 0, i.e. OFF
     var weightISF = profile.autoisf_hourlychange;           // mod 7d: specify factor directly; use factor 0 to shut autoISF OFF
-    if (meal_data.mealCOB==0 && dura05>=5) {
+    if (meal_data.mealCOB == 0 && dura05 >= 5) {
         if (avg05 > target_bg) {
             // # fight the resistance at high levels
             var maxISFReduction = profile.autoisf_max;      // mod 7d
             var dura05_weight = dura05 / 60;
             var avg05_weight = weightISF / target_bg;       // mod gz7b: provide access from AAPS
-            var levelISF = 1 + dura05_weight*avg05_weight*(avg05-target_bg);
+            var levelISF = 1 + dura05_weight * avg05_weight * (avg05 - target_bg);
             var liftISF = Math.max(Math.min(maxISFReduction, levelISF), sensitivityRatio);  // corrected logic on 30.Jan.2021
-            console.error("autoISF reports", sens, "did not do it for", dura05,"m; go more aggressive by", round(levelISF,2));
+            console.error("autoISF reports", sens, "did not do it for", dura05, "m; go more aggressive by", round(levelISF, 2));
             if (maxISFReduction < levelISF) {
-                console.error("autoISF reduction", round(levelISF,2), "limited by autoisf_max", maxISFReduction);
+                console.error("autoISF reduction", round(levelISF, 2), "limited by autoisf_max", maxISFReduction);
             }
             sens = round(profile.sens / liftISF, 1);
         } else {
             console.error("autoISF by-passed; avg. glucose", avg05, "below target", target_bg);
         }
-    } else if (meal_data.mealCOB>0) {
-        console.error("autoISF by-passed; mealCOB of "+round(meal_data.mealCOB,1));
+    } else if (meal_data.mealCOB > 0) {
+        console.error("autoISF by-passed; mealCOB of " + round(meal_data.mealCOB, 1));
     } else {
-        console.error("autoISF by-passed; BG is only "+dura05+"m at level "+avg05);
+        console.error("autoISF by-passed; BG is only " + dura05 + "m at level " + avg05);
     }
     return sens;
 }
 // auto ISF === END
-
 var determine_basal = function determine_basal(glucose_status, currenttemp, iob_data, profile, autosens_data, meal_data, tempBasalFunctions, microBolusAllowed, reservoir_data, currentTime, isSaveCgmSource) {
     var rT = {}; //short for requestedTemp
 
@@ -327,18 +325,25 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         //console.log(" (autosens ratio "+sensitivityRatio+")");
     }
     console.error("; CR:",profile.carb_ratio);
-  if (profile.temptargetSet && target_bg>=80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5 ) { //MT: change isf for a normal meal who will rise slowly
-    sens = profile.sens / 3; //MT will change isf value : if ISF = 72, in this condition it will become 24
-    sens = round(sens,1);
+    if (profile.temptargetSet && target_bg >= 80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 4) { //MT: change isf for a normal meal who will rise slowly
+        sens = profile.sens / 3; //MT will change isf value : if ISF = 72, in this condition it will become 24
+        sens = round(sens, 1);
 
-    } else if (profile.temptargetSet && target_bg >= 80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob > 5) {
-    sens = profile.sens * 1.6; //MT will change ISF value : if ISF = 72, in this condition it will become 115. The objective is to give more time to the first 5U to be active and not overdosing
-    sens = round(sens,1);
+    } else if (profile.temptargetSet && target_bg >= 80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 6) { //MT: change isf for a normal meal who will rise slowly
+        sens = profile.sens / 2; //MT will change isf value : if ISF = 72, in this condition it will become 36
+        sens = round(sens, 1);
 
-    }else if (profile.temptargetSet && target_bg <= 79 && profile.temptarget_duration >= 60 && iob_data.iob < 8) { //MT : change ISF for a large meal with sugar, will send big quantity faster and will  stop arround 10 in the first rise bigger than 10, in two smb
-    sens = profile.sens / 3;
-    sens = round (sens,1);
+    } else if (profile.temptargetSet && target_bg >= 80 && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob > 6) {
+        sens = profile.sens * 1.5; //MT will change ISF value : if ISF = 72, in this condition it will become 115. The objective is to give more time to the first 5U to be active and not overdosing
+        sens = round(sens, 1);
 
+    } else if (profile.temptargetSet && target_bg <= 79 && profile.temptarget_duration >= 60 && iob_data.iob < 8) { //MT : change ISF for a large meal with sugar, will send big quantity faster and will  stop arround 10 in the first rise bigger than 10, in two smb
+        sens = profile.sens / 3;
+        sens = round(sens, 1);
+
+    } else if (profile.temptargetSet && target_bg <= 79 && profile.temptarget_duration >= 60 && iob_data.iob > 8) {
+        sens = profile.sens * 1.5; //MT will change ISF value : if ISF = 72, in this condition it will become 115. The objective is to give more time to the first 5U to be active and not overdosing
+        sens = round(sens, 1);
     }
     sens = autoISF(sens, target_bg, profile, glucose_status, meal_data, autosens_data, sensitivityRatio); //autoISF //MT : come back to the normal value from autoISF with temptarget
 
@@ -612,44 +617,40 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     var remainingCIs = [];
     var predCIs = [];
     var ignoreCOB = true; //MD#01: Ignore any COB and rely purely on UAM
-    var predBGslengthDefault = 21; //MD Normal prediction length of 21 * 5 = 1h 45m
-    var predBGslength = predBGslengthDefault; //MD Normal prediction length of 21 * 5 = 1h 45m
-    var predBGslengthStaticMins = 0; // just to set the variable
-    var waves = false;
-     //MD MT If we have a Low TT of <= 5.0 (90) for 60 minutes or more then we are eating soon
-    if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60) { //&& bg > threshold
-            predBGslengthDefault = 18; // prediction bit shorter for when eating soon is on
-            predBGslength = predBGslengthDefault;
-            predBGslengthStaticMins = round(profile.temptarget_duration/5,0); // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
 
-            // MD MT Shorten the prediction to 6 * 5 = 30m when rising in the short term
-            // The rise typically starts after 15 minutes so allow this extra time
-            // We start at 6 and go longer over time every 5 minutes ie 6 - 12
-            if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0) {
-                //predBGslengthStaticMins = 45; // predBGslength remains constant for this duration in minutes then every 5 mins it will increase by 1
-                predBGslength = Math.max(round(predBGslengthStaticMins-(predBGslengthStaticMins-(profile.temptarget_minutesrunning/5)),0),6); //increase by 1 every 5 starting value is 6 in this case
-                predBGslength = Math.min(predBGslength,predBGslengthDefault); // The most this prediction length can get is 15 in this case
-           }
+    // MD: maxBolusTT code for UAM === START
+    var predBGslengthDefault = 21; // Normal prediction length default of 21 * 5 = 1h 45m, this is used by SMB later
+    var predBGslength = predBGslengthDefault; // Set prediction length to default
+    var predBGslengthStaticMins = 0; // We start with no fixed window for prediction length
+
+    // If we have a TT of <= 5.5 (100) and >= 5.0 (90) shorten the predictions, this can be used even for short automations now
+    if (profile.temptargetSet && target_bg <= normalTarget && target_bg >= 90) {
+        predBGslengthDefault = 19; // prediction bit shorter for anything 5.5 or less (1h 35m)
+        predBGslength = predBGslengthDefault; // this is now the default length in this TT and SMB will use 80% below when default length is evaluated
     }
 
-    //MT if we have resistance to avoid long time out of range, this one is a test to manage out of post meal time
-            if (! profile.temptargetSet && bg > 150 && iob_data.iob<6){
-                predBGslength=12;
-                waves = true;
+    // If we have a TT of < 5.0 (90) shorten the predictions further as this is considered as we are eating soon
+    if (profile.temptargetSet && target_bg < 90) {
+        predBGslengthDefault = 18; // prediction even shorter for anything 4.9 or less (1h 30m)
+        predBGslength = predBGslengthDefault; // this is now the default length in this TT and SMB will use 80% when default length is in use
 
-            }
-//    //MD MT If we have a Low TT of <= 5.0 (90) for 90 minutes or more then we are eating soon
-//            if (profile.temptargetSet && target_bg <= 85 && bg > threshold && profile.temptarget_duration >= 60) {
-//                predBGslength = 18; // bit shorter for when eating soon is on
-//                //MD MT The first spike usually peaks after an hour
-//                if (profile.temptarget_minutesrunning <= 30 && glucose_status.delta > 0 && iob_data.iob<= 7) predBGslength = 6; //MD Shorten the prediction to 6 * 5 = 30m very powerfull
-//                //MD MT Shorten the prediction to 6 * 5 = 30m when delta is positive and greater than 15 min average in the short term - insulinPeakTime :)
-//                if (profile.temptarget_minutesrunning <= 90 && glucose_status.delta > 0 && glucose_status.delta > glucose_status.long_avgdelta && iob_data.iob<=10) predBGslength = 6;
-//                //MD MT The second spike usually comes at 1h30 or 3h
-//                //if (profile.temptarget_minutesrunning >= 120 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0) predBGslength = 12; //MD MT Shorten the prediction to 10 * 5 = 50m when rising
-//                //MD MT Shorten the prediction to 12 * 5 = 60m when delta is positive and greater than 15 min average in the long term
-//                if (profile.temptarget_minutesrunning >= 90 && profile.temptarget_minutesrunning <= 240 && glucose_status.delta > 0 && glucose_status.delta >= glucose_status.long_avgdelta) predBGslength = 12; //MD MT Shorten the prediction to 12 * 5 = 60m when rising
-//            }
+        // Static predBGslength for 33% of TT duration up to 40 minutes, this is the only window for increased SMB and shorter predictions to combat the rise
+        predBGslengthStaticMins = Math.min(round(profile.temptarget_duration/3,0),40);
+
+        // If we dont have too much IOB and rising and within predBGslengthStaticMins shorten the prediction and increase SMB allowance later to combat the BGL rise
+        if (iob_data.iob <= (max_iob * 0.6) && glucose_status.delta > 0 && profile.temptarget_minutesrunning <= predBGslengthStaticMins) {
+            predBGslength = 9; // prediction length shortened to 45 minutes, predBGslengthDefault remains intact for SMB evaluation later
+        }else if (iob_data.iob >= (max_iob * 0.6) && glucose_status.delta > 15 && profile.temptarget_minutesrunning >= predBGslengthStaticMins){
+            predBGslength = 12;
+        }
+
+        // not using this code as it can take too long to lengthen prediction, will review later
+        //increase prediction length by 1 every 5 minutes, starting value is predBGslength max is 40 minutes
+        //predBGslengthStaticMins = Math.min(round(profile.temptarget_duration/3,0),40); // static predBGslength for 30% of TT duration up to 40 minutes
+        //predBGslength = Math.max(round((profile.temptarget_minutesrunning-(predBGslengthStaticMins-30))/5,0),predBGslength);
+        //predBGslength = Math.min(predBGslength,predBGslengthDefault); // The most this prediction length can get is predBGslengthDefault in this case
+    }
+    //MD maxBolusTT code for UAM === END
 
     try {
         iobArray.forEach(function(iobTick) {
@@ -705,12 +706,9 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             if ( ZTpredBG < minZTGuardBG ) { minZTGuardBG = round(ZTpredBG); }
 
             // set minPredBGs starting when currently-dosed insulin activity will peak
-            // look ahead 60m (regardless of insulin type) so as to be less aggressive on slower insulins
-            var insulinPeakTime = 45;
-            // add 30m to allow for insulin delivery (SMBs or temps)
-            //insulinPeakTime = 60;
             // look ahead to insulinPeakTime
             var insulinPeakTime = profile.insulinPeakTime + 5;
+            // add 30m to allow for insulin delivery (SMBs or temps)
             var insulinPeak5m = (insulinPeakTime/60)*12;
             //console.error(insulinPeakTime, insulinPeak5m, profile.insulinPeakTime, profile.curve);
 
@@ -882,7 +880,8 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
 
     // make sure minPredBG isn't higher than avgPredBG
     minPredBG = Math.min( minPredBG, avgPredBG );
-    console.log("predBGslength: "+predBGslength+" ");
+    console.log("predBGslength: "+predBGslength +"/" + predBGslengthDefault + " ");
+    if (profile.temptarget_minutesrunning) console.log("("+ profile.temptarget_minutesrunning+"/"+predBGslengthStaticMins +") ");
     console.log("minPredBG: "+minPredBG+" minIOBPredBG: "+minIOBPredBG+" minZTGuardBG: "+minZTGuardBG);
     if (minCOBPredBG < 999) {
         console.log(" minCOBPredBG: "+minCOBPredBG);
@@ -905,9 +904,10 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         rT.reason += ", COBpredBG " + convert_bg(lastCOBpredBG, profile);
     }
     if (lastUAMpredBG > 0) {
-        rT.reason += ", UAMpredBG " + convert_bg(lastUAMpredBG, profile)
+        rT.reason += ", UAMpredBG " + convert_bg(lastUAMpredBG, profile); //MD Missing ;
     }
-    rT.reason +=", predBGslength " + predBGslength;
+    rT.reason +=", predBGslength: " + predBGslength +"/" + predBGslengthDefault;
+    if (profile.temptarget_minutesrunning) rT.reason +=" (" + profile.temptarget_minutesrunning + "/" + predBGslengthStaticMins + ")";
     rT.reason += "; ";
     // use naive_eventualBG if above 40, but switch to minGuardBG if both eventualBGs hit floor of 39
     var carbsReqBG = naive_eventualBG;
@@ -982,6 +982,15 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         rT.reason += carbsReq + " add'l carbs req w/in " + minutesAboveThreshold + "m; ";
     }
 
+    // ********* EXPERIMENTAL ************
+    // we are in a TT that is low enough and long enough and just started so allow 1U prebolus if SMB allowed
+    if (microBolusAllowed && profile.temptargetSet && target_bg < 90 && profile.temptarget_duration >= 120 && profile.temptarget_minutesrunning == 0) {
+        rT.units = 1.0;
+        rT.reason += "Prebolusing " + rT.units + "U. ";
+        return rT;
+    }
+    // ********* EXPERIMENTAL ************
+
     // don't low glucose suspend if IOB is already super negative and BG is rising faster than predicted
     if (bg < threshold && iob_data.iob < -profile.current_basal*20/60 && minDelta > 0 && minDelta > expectedDelta) {
         rT.reason += "IOB "+iob_data.iob+" < " + round(-profile.current_basal*20/60,2);
@@ -1032,6 +1041,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         // multiply by 2 to low-temp faster for increased hypo safety
         var insulinReq = 2 * Math.min(0, (eventualBG - target_bg) / sens);
         insulinReq = round( insulinReq , 2);
+
         // calculate naiveInsulinReq based on naive_eventualBG
         var naiveInsulinReq = Math.min(0, (naive_eventualBG - target_bg) / sens);
         naiveInsulinReq = round( naiveInsulinReq , 2);
@@ -1134,6 +1144,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         // insulinReq is the additional insulin required to get minPredBG down to target_bg
         //console.error(minPredBG,eventualBG);
         insulinReq = round( (Math.min(minPredBG,eventualBG) - target_bg) / sens, 2);
+
         // if that would put us over max_iob, then reduce accordingly
         if (insulinReq > max_iob-iob_data.iob) {
             rT.reason += "max_iob " + max_iob + ", ";
@@ -1172,33 +1183,35 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                 maxBolus = round( profile.current_basal * profile.maxSMBBasalMinutes / 60 ,1);
             }
 
-           //MD MT bolus the insulinReq, up to maxBolus %, rounding down to nearest bolus increment
-                        var roundSMBTo = 1 / profile.bolus_increment;
-                        //var microBolus = Math.floor(Math.min(insulinReq/2,maxBolus)*roundSMBTo)/roundSMBTo;
-                       var insulinReqPct = 0.65;
-                       var maxBolusTT=maxBolus;
-                       //var microBolus = Math.floor(Math.min(insulinReq * insulinReqPct ,maxBolus)*roundSMBTo)/roundSMBTo; //MD Allow 80% insulinReq by default
+            //MD: Bolus the insulinReq, up to maxBolus %, rounding down to nearest bolus increment
+            var roundSMBTo = 1 / profile.bolus_increment;
+            var insulinReqPct = 0.8; // this is the default for insulinReq amount
+            var maxBolusTT = maxBolus; // set at maxBolus safety
+            //MT : send a prebolus when TT start
+            if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5 && profile.temptarget_minutesrunning <= 5) {
+                insulinReq = 2;
+                insulinReqPct = 1;
+                maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
 
-                       // If we have shortened the prediction we have set a TT of 5.0 (90) or below, allow larger maxBolus up to insulinReqPct of insulinReq
-                       // The max-iob and maxbolus settings should be reviewed within the safety section of AAPS
-                       // https://androidaps.readthedocs.io/en/latest/Usage/Open-APS-features.html#super-micro-bolus-smb
-                        // maxBolus is allowed to go to this % of the insulinReq if bg is predicted to be higher
-                       if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && predBGslength <=6 && iob_data.iob < 5) {
-                            insulinReqPct = 1.3;
-                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct); //MD maxBolus is existing maxBolus or insulinReqPct % of the insulinReq, whichever is the greater
-                       }else if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && predBGslength <=15 && UAMpredBG > 130 && iob_data.iob < 8) {
-                            insulinReqPct = 1;
-                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
-                       }else if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && UAMpredBG > 150) {
-                            insulinReqPct = 0.85;
-                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
 
-                       }else if ( waves === true )   {
-                            insulinReqPct = 0.85;
-                            maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
-                       }
+            // If we have shortened the prediction from predBGslengthDefault allow larger maxBolus up to insulinReqPct of insulinReq
+            // The max-iob and maxbolus settings should be reviewed within the safety section of AAPS
+            // https://androidaps.readthedocs.io/en/latest/Usage/Open-APS-features.html#super-micro-bolus-smb
+            // maxBolus is allowed to go to this % of the insulinReq if bg is predicted to be higher
+            }else if (profile.temptargetSet && predBGslength < predBGslengthDefault && eventualBG > bg ) { // If the eventual BG is less than current on the short prediction we will respect it!
+                // If we are within the window we allow an increase in insulinReq
+                if (profile.temptarget_minutesrunning <= predBGslengthStaticMins) { // the above if statement should just mean that this is true
+                    insulinReqPct = 1; // this could be different for the window end
+                    var maxinsulinReqPct = 2; // scale this value down to insulinReqPct over predBGslengthStaticMins
+                    insulinReqPct = round(maxinsulinReqPct-(maxinsulinReqPct-insulinReqPct)/predBGslengthStaticMins*profile.temptarget_minutesrunning,1);
+                }
+                maxBolusTT = round(Math.max(maxBolus, insulinReq * insulinReqPct),1); //MD maxBolus is existing maxBolus or insulinReqPct % of the insulinReq, whichever is the greater
+            }
 
-                       var microBolus = Math.floor(Math.min(insulinReq*insulinReqPct,maxBolusTT)*roundSMBTo)/roundSMBTo; // MD allow up to maxBolus of insulinReq
+            //MD Allow 80% insulinReq OR a value override provided by maxBolusTT
+            //MT Allow a prebolus 2U the first 5 minutes of TT
+            var microBolus = Math.floor(Math.min(insulinReq * insulinReqPct ,maxBolusTT)*roundSMBTo)/roundSMBTo;
+
             // calculate a long enough zero temp to eventually correct back up to target
             var smbTarget = target_bg;
             worstCaseInsulinReq = (smbTarget - (naive_eventualBG + minIOBPredBG)/2 ) / sens;
@@ -1240,12 +1253,12 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
                 smbLowTempReq = round( basal * durationReq/30 ,2);
                 durationReq = 30;
             }
-            rT.reason += " insulinReq " + insulinReq;
-            if (microBolus > maxBolus) {
-                rT.reason +=  "; maxBolus " + maxBolus + ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
+            rT.reason += " insulinReq " + Math.round(insulinReqPct*100) + "% " + insulinReq;
+            if (microBolus >= maxBolus) {
+                rT.reason +=  "; maxBolus " + maxBolus;
             }
             if (durationReq > 0) {
-                rT.reason += "; setting " + durationReq + "m low temp of " + smbLowTempReq + "U/h"+ ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
+                rT.reason += "; setting " + durationReq + "m low temp of " + smbLowTempReq + "U/h";
             }
             rT.reason += ". ";
 
@@ -1262,7 +1275,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             if (lastBolusAge > SMBInterval) {
                 if (microBolus > 0) {
                     rT.units = microBolus;
-                    rT.reason += "Microbolusing " + microBolus + "U. "+ ", maxBolusTT " + Math.round(insulinReqPct*100) + "%";
+                    rT.reason += "Microbolusing " + microBolus + "U. ";
                 }
             } else {
                 rT.reason += "Waiting " + nextBolusMins + "m " + nextBolusSeconds + "s to microbolus again. ";
@@ -1292,17 +1305,17 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
         }
 
         if (typeof currenttemp.duration === 'undefined' || currenttemp.duration === 0) { // no temp is set
-            rT.reason += "no temp, setting " + rate + "U/hr. ";
+            rT.reason += "no temp, setting " + round(rate,2) + "U/hr. ";
             return tempBasalFunctions.setTempBasal(rate, 30, profile, rT, currenttemp);
         }
 
         if (currenttemp.duration > 5 && (round_basal(rate, profile) <= round_basal(currenttemp.rate, profile))) { // if required temp <~ existing temp basal
-            rT.reason += "temp " + currenttemp.rate + " >~ req " + rate + "U/hr. ";
+            rT.reason += "temp " + currenttemp.rate + " >~ req " + round(rate,2) + "U/hr. ";
             return rT;
         }
 
         // required temp > existing temp basal
-        rT.reason += "temp " + currenttemp.rate + "<" + rate + "U/hr. ";
+        rT.reason += "temp " + currenttemp.rate + "<" + round(rate,2) + "U/hr. ";
         return tempBasalFunctions.setTempBasal(rate, 30, profile, rT, currenttemp);
     }
 
