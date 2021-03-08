@@ -813,7 +813,9 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     } else {
         avgPredBG = round( IOBpredBG );
     }
-    if (ignoreCOB && enableUAM) avgPredBG = round( (IOBpredBG + UAMpredBG)/2 );  //MD#01: If we are ignoring COB and we have UAM, average IOB and UAM as above
+    if (ignoreCOB && enableUAM) {
+        avgPredBG = round((IOBpredBG + UAMpredBG) / 2);  //MD#01: If we are ignoring COB and we have UAM, average IOB and UAM as above
+    }
     // if avgPredBG is below minZTGuardBG, bring it up to that level
     if ( minZTGuardBG > avgPredBG ) {
         avgPredBG = minZTGuardBG;
@@ -831,8 +833,10 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     } else {
         minGuardBG = minIOBGuardBG;
     }
-    if (ignoreCOB && enableUAM) minGuardBG = minUAMGuardBG; //MD#01: if we are ignoring COB and have UAM just use minUAMGuardBG as above
-    minGuardBG = round(minGuardBG);
+    if (ignoreCOB && enableUAM) {
+        minGuardBG = minUAMGuardBG; //MD#01: if we are ignoring COB and have UAM just use minUAMGuardBG as above
+        minGuardBG = round(minGuardBG);
+    }
     //console.error(minCOBGuardBG, minUAMGuardBG, minIOBGuardBG, minGuardBG);
 
     var minZTUAMPredBG = minUAMPredBG;
@@ -857,27 +861,28 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     // if any carbs have been entered recently
     if (meal_data.carbs) {
 
-        // if UAM is disabled, use max of minIOBPredBG, minCOBPredBG
-        if ( ! enableUAM && minCOBPredBG < 999 ) {
-            minPredBG = round(Math.max(minIOBPredBG, minCOBPredBG));
-        // if we have COB, use minCOBPredBG, or blendedMinPredBG if it's higher
-        } else if ( minCOBPredBG < 999 ) {
-            // calculate blendedMinPredBG based on how many carbs remain as COB
-            var blendedMinPredBG = fractionCarbsLeft*minCOBPredBG + (1-fractionCarbsLeft)*minZTUAMPredBG;
-            // if blendedMinPredBG > minCOBPredBG, use that instead
-            minPredBG = round(Math.max(minIOBPredBG, minCOBPredBG, blendedMinPredBG));
-        // if carbs have been entered, but have expired, use minUAMPredBG
-        } else if ( enableUAM ) {
-            minPredBG = minZTUAMPredBG;
-        } else {
-            minPredBG = minGuardBG;
-        }
-    // in pure UAM mode, use the higher of minIOBPredBG,minUAMPredBG
-    } else if ( enableUAM ) {
-        minPredBG = round(Math.max(minIOBPredBG,minZTUAMPredBG));
-    }
-    if (ignoreCOB && enableUAM) minPredBG = round(Math.max(minIOBPredBG,minZTUAMPredBG)); //MD#01 If we are ignoring COB with UAM enabled use pure UAM mode like above
+            // if UAM is disabled, use max of minIOBPredBG, minCOBPredBG
+            if (!enableUAM && minCOBPredBG < 999) {
+                minPredBG = round(Math.max(minIOBPredBG, minCOBPredBG));
+                // if we have COB, use minCOBPredBG, or blendedMinPredBG if it's higher
+            } else if (minCOBPredBG < 999) {
+                // calculate blendedMinPredBG based on how many carbs remain as COB
+                var blendedMinPredBG = fractionCarbsLeft * minCOBPredBG + (1 - fractionCarbsLeft) * minZTUAMPredBG;
+                // if blendedMinPredBG > minCOBPredBG, use that instead
+                minPredBG = round(Math.max(minIOBPredBG, minCOBPredBG, blendedMinPredBG));
+                // if carbs have been entered, but have expired, use minUAMPredBG
+            } else if (enableUAM) {
+                minPredBG = minZTUAMPredBG;
+            } else {
+                minPredBG = minGuardBG;
+            }
 
+            // in pure UAM mode, use the higher of minIOBPredBG,minUAMPredBG
+        } else if (ignoreCOB && enableUAM) {//MD#01 If we are ignoring COB with UAM enabled use pure UAM mode like above
+            minPredBG = round(Math.max(minIOBPredBG, minZTUAMPredBG));
+        }else if ( enableUAM) {
+            minPredBG = round(Math.max(minIOBPredBG, minZTUAMPredBG));
+        }
     // make sure minPredBG isn't higher than avgPredBG
     minPredBG = Math.min( minPredBG, avgPredBG );
     console.log("predBGslength: "+predBGslength +"/" + predBGslengthDefault + " ");
@@ -984,7 +989,11 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
 
     // ********* EXPERIMENTAL ************
     // we are in a TT that is low enough and long enough and just started so allow 1U prebolus if SMB allowed
-    if (microBolusAllowed && profile.temptargetSet && target_bg < 90 && profile.temptarget_duration >= 120 && profile.temptarget_minutesrunning == 0) {
+    if (microBolusAllowed && profile.temptargetSet && target_bg < 90 && profile.temptarget_duration >= 60 && profile.temptarget_minutesrunning == 0) {
+        rT.units = 2.0;
+        rT.reason += "Prebolusing " + rT.units + "U. ";
+        return rT;
+    }else if (microBolusAllowed && profile.temptargetSet && target_bg < 90 && profile.temptarget_duration >= 120 && profile.temptarget_minutesrunning == 0) {
         rT.units = 1.0;
         rT.reason += "Prebolusing " + rT.units + "U. ";
         return rT;
@@ -1188,17 +1197,18 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
             var insulinReqPct = 0.8; // this is the default for insulinReq amount
             var maxBolusTT = maxBolus; // set at maxBolus safety
             //MT : send a prebolus when TT start
-            if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5 && profile.temptarget_minutesrunning <= 5) {
-                insulinReq = 2;
-                insulinReqPct = 1;
-                maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
+//            if (profile.temptargetSet && target_bg <= 85 && profile.temptarget_duration >= 60 && iob_data.iob < 5 && profile.temptarget_minutesrunning <= 5) {
+//                insulinReq = 2;
+//                insulinReqPct = 1;
+//                maxBolusTT = Math.max(maxBolus, insulinReq * insulinReqPct);
 
 
             // If we have shortened the prediction from predBGslengthDefault allow larger maxBolus up to insulinReqPct of insulinReq
             // The max-iob and maxbolus settings should be reviewed within the safety section of AAPS
             // https://androidaps.readthedocs.io/en/latest/Usage/Open-APS-features.html#super-micro-bolus-smb
             // maxBolus is allowed to go to this % of the insulinReq if bg is predicted to be higher
-            }else if (profile.temptargetSet && predBGslength < predBGslengthDefault && eventualBG > bg ) { // If the eventual BG is less than current on the short prediction we will respect it!
+            //}else
+            if (profile.temptargetSet && predBGslength < predBGslengthDefault && eventualBG > bg ) { // If the eventual BG is less than current on the short prediction we will respect it!
                 // If we are within the window we allow an increase in insulinReq
                 if (profile.temptarget_minutesrunning <= predBGslengthStaticMins) { // the above if statement should just mean that this is true
                     insulinReqPct = 1; // this could be different for the window end
