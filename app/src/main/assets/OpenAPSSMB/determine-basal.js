@@ -989,7 +989,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
 
     // ********* EXPERIMENTAL ************
     // we are in a TT that is low enough and long enough and just started so allow 1U prebolus if SMB allowed
-    if (microBolusAllowed && profile.temptargetSet && target_bg < 90 && profile.temptarget_duration >= 60 && profile.temptarget_minutesrunning == 0) {
+    if (microBolusAllowed && profile.temptargetSet && target_bg < 90 && profile.temptarget_duration >= 60 && profile.temptarget_duration < 120 && profile.temptarget_minutesrunning == 0) {
         rT.units = 2.0;
         rT.reason += "Prebolusing " + rT.units + "U. ";
         return rT;
