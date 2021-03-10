@@ -34,6 +34,11 @@
 
         <SwitchPreference
             android:defaultValue="false"
+            android:key="openapsama_useautoisf"
+            android:title="@string/openapsama_useautoisf" />
+
+        <SwitchPreference
+            android:defaultValue="false"
             android:key="@string/key_use_smb"
             android:summary="@string/enablesmb_summary"
             android:title="@string/enablesmb" />
@@ -94,7 +99,7 @@
             android:inputType="number"
             android:key="@string/key_smbmaxminutes"
             android:title="@string/smbmaxminutes_summary"
-            validate:maxNumber="120"
+            validate:maxNumber="200"
             validate:minNumber="15"
             validate:testType="numericRange" />
 
@@ -108,7 +113,7 @@
             android:selectAllOnFocus="true"
             android:singleLine="true"
             android:title="@string/uamsmbmaxminutes_summary"
-            validate:maxNumber="120"
+            validate:maxNumber="200"
             validate:minNumber="15"
             validate:testType="numericRange" />
 
@@ -133,7 +138,7 @@
         <!-- TODO AS-FIX -->
         <SwitchPreference
             android:defaultValue="false"
-            android:enabled="false"
+            android:enabled="true"
             android:key="@string/key_high_temptarget_raises_sensitivity"
             android:summary="@string/high_temptarget_raises_sensitivity_summary"
             android:title="@string/high_temptarget_raises_sensitivity_title" />
@@ -141,7 +146,7 @@
         <!-- TODO AS-FIX -->
         <SwitchPreference
             android:defaultValue="false"
-            android:enabled="false"
+            android:enabled="true"
             android:key="@string/key_low_temptarget_lowers_sensitivity"
             android:summary="@string/low_temptarget_lowers_sensitivity_summary"
             android:title="@string/low_temptarget_lowers_sensitivity_title" />
